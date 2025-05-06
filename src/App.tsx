@@ -32,8 +32,58 @@ function RadarChart({ color = "red", isDark = true, variant = "first", isVisible
 
   useEffect(() => {
     if (variant === "second" && isVisible && !animationStarted.current) {
-      animationStarted.current = true;
-      const finalDataPoints = [85, 90, 80, 95, 88, 92];
+  animationStarted.current = true;
+
+  fetch("https://splendid-treacle-638f28.netlify.app/.netlify/functions/typebot-data", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ request: "get-latest" }) // optional dummy body
+  })
+    .then(res => res.json())
+    .then(data => {
+      const finalDataPoints = data.dataPoints || [85, 90, 80, 95, 88, 92];
+      const finalColor = {
+        fill: "rgba(34, 197, 94, 0.15)",
+        stroke: "rgb(34, 197, 94)"
+      };
+
+      const duration = 1500;
+      const frames = 60;
+      const interval = duration / frames;
+      let frame = 0;
+
+      const animation = setInterval(() => {
+        frame++;
+        const progress = frame / frames;
+
+        const newDataPoints = currentDataPoints.map((start, i) => {
+          const end = finalDataPoints[i];
+          return Math.round(start + (end - start) * progress);
+        });
+
+        const startRed = 239;
+        const startGreen = 68;
+        const endRed = 34;
+        const endGreen = 197;
+
+        const currentRed = Math.round(startRed + (endRed - startRed) * progress);
+        const currentGreen = Math.round(startGreen + (endGreen - startGreen) * progress);
+
+        setCurrentColor({
+          fill: `rgba(${currentRed}, ${currentGreen}, 68, 0.15)`,
+          stroke: `rgb(${currentRed}, ${currentGreen}, 68)`
+        });
+
+        setCurrentDataPoints(newDataPoints);
+
+        if (frame >= frames) {
+          clearInterval(animation);
+        }
+      }, interval);
+    });
+}
       const finalColor = {
         fill: "rgba(34, 197, 94, 0.15)",
         stroke: "rgb(34, 197, 94)"
